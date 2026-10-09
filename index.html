@@ -6,23 +6,22 @@
   <title>Stickman Editor</title>
   <style>
     :root {
-      --bg: #0d1117;
-      --panel: #161b22;
-      --panel-2: #1f2631;
-      --text: #e6edf3;
-      --muted: #9aa4b2;
-      --accent: #6ee7ff;
-      --accent-2: #a78bfa;
-      --danger: #ff6b6b;
-      --grid: rgba(255,255,255,0.07);
+      --bg: #0b1220;
+      --panel: #111a2b;
+      --panel-2: #182334;
+      --text: #eaf2ff;
+      --accent: #7ee7ff;
+      --accent-2: #8b7dff;
+      --danger: #ff7a7a;
+      --grid: rgba(255,255,255,0.08);
     }
 
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
-      height: 100%;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: radial-gradient(circle at top, #171c26, var(--bg) 55%);
+      min-height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      background: radial-gradient(circle at top, #162335, var(--bg) 55%);
       color: var(--text);
     }
 
@@ -33,13 +32,12 @@
     }
 
     .app {
-      width: min(100%, 1020px);
-      background: rgba(17, 22, 30, 0.9);
-      border: 1px solid rgba(255,255,255,0.08);
+      width: min(100%, 1050px);
       border-radius: 18px;
       overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
-      backdrop-filter: blur(8px);
+      background: rgba(14, 21, 32, 0.9);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.45);
     }
 
     .toolbar {
@@ -50,12 +48,12 @@
       gap: 12px;
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       border-bottom: 1px solid rgba(255,255,255,0.08);
-      padding: 14px 16px;
+      padding: 12px 16px;
     }
 
     .title {
       font-weight: 700;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--accent);
       font-size: 12px;
@@ -76,34 +74,31 @@
       padding: 10px 14px;
       font-size: 14px;
       cursor: pointer;
-      transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+      transition: 0.12s ease;
     }
 
     button:hover, input[type="color"]:hover {
-      border-color: rgba(110,231,255,0.55);
-      box-shadow: 0 0 0 3px rgba(110,231,255,0.08);
+      border-color: rgba(126,231,255,0.8);
+      box-shadow: 0 0 0 2px rgba(126,231,255,0.12);
     }
-
-    button:active { transform: translateY(1px); }
 
     .primary {
       background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #09131d;
+      color: #08131b;
       border-color: transparent;
       font-weight: 700;
     }
 
     .danger {
-      background: rgba(255,107,107,0.12);
-      border-color: rgba(255,107,107,0.35);
-      color: #ffc2c2;
+      background: rgba(255,122,122,0.12);
+      border-color: rgba(255,122,122,0.4);
+      color: #ffd4d4;
     }
 
     input[type="color"] {
-      width: 44px;
+      width: 42px;
       height: 38px;
-      padding: 4px;
-      min-width: 44px;
+      padding: 3px;
     }
 
     canvas {
@@ -113,7 +108,7 @@
       background:
         linear-gradient(var(--grid) 1px, transparent 1px),
         linear-gradient(90deg, var(--grid) 1px, transparent 1px),
-        linear-gradient(180deg, #0f1721, #101a26 60%, #0b1320);
+        linear-gradient(180deg, #0f1724, #101a29 60%, #0b121d);
       background-size: 24px 24px, 24px 24px, 100% 100%;
       background-position: center center;
     }
@@ -129,7 +124,7 @@
         <button id="downloadPng" class="primary">Download PNG</button>
         <button id="clearPose" class="danger">Clear</button>
         <label title="Stick color" aria-label="Stick color">
-          <input id="colorPicker" type="color" value="#6ee7ff" />
+          <input id="colorPicker" type="color" value="#7ee7ff" />
         </label>
       </div>
     </div>
@@ -142,20 +137,20 @@
     const colorPicker = document.getElementById('colorPicker');
 
     const DEFAULT = {
-      head: { x: 500, y: 110, r: 34 },
-      neck: { x: 500, y: 170 },
-      shoulderL: { x: 440, y: 210 },
-      shoulderR: { x: 560, y: 210 },
-      elbowL: { x: 392, y: 295 },
-      elbowR: { x: 610, y: 295 },
-      handL: { x: 350, y: 365 },
-      handR: { x: 665, y: 365 },
-      hipL: { x: 470, y: 270 },
-      hipR: { x: 530, y: 270 },
-      kneeL: { x: 455, y: 400 },
-      kneeR: { x: 545, y: 400 },
-      footL: { x: 430, y: 520 },
-      footR: { x: 570, y: 520 }
+      head: { x: 500, y: 120, r: 34 },
+      neck: { x: 500, y: 175 },
+      shoulderL: { x: 435, y: 220 },
+      shoulderR: { x: 565, y: 220 },
+      elbowL: { x: 380, y: 300 },
+      elbowR: { x: 620, y: 300 },
+      handL: { x: 345, y: 380 },
+      handR: { x: 655, y: 380 },
+      hipL: { x: 470, y: 275 },
+      hipR: { x: 530, y: 275 },
+      kneeL: { x: 450, y: 395 },
+      kneeR: { x: 550, y: 395 },
+      footL: { x: 425, y: 520 },
+      footR: { x: 575, y: 520 }
     };
 
     let joints = structuredClone(DEFAULT);
@@ -177,37 +172,37 @@
 
     function randomPose() {
       const cx = 500;
-      const cy = 200;
+      const cy = 210;
       joints = {
-        head: { x: cx, y: 105, r: 34 },
+        head: { x: cx, y: 110, r: 34 },
         neck: { x: cx, y: 170 },
-        shoulderL: { x: cx - 62, y: cy + 20 },
-        shoulderR: { x: cx + 62, y: cy + 20 },
-        elbowL: { x: cx - 105, y: cy + 110 },
-        elbowR: { x: cx + 105, y: cy + 110 },
-        handL: { x: cx - 145, y: cy + 180 },
-        handR: { x: cx + 145, y: cy + 180 },
-        hipL: { x: cx - 38, y: cy + 85 },
-        hipR: { x: cx + 38, y: cy + 85 },
-        kneeL: { x: cx - 55, y: cy + 220 },
-        kneeR: { x: cx + 55, y: cy + 220 },
-        footL: { x: cx - 70, y: cy + 340 },
-        footR: { x: cx + 70, y: cy + 340 }
+        shoulderL: { x: cx - 70, y: cy + 10 },
+        shoulderR: { x: cx + 70, y: cy + 10 },
+        elbowL: { x: cx - 120, y: cy + 105 },
+        elbowR: { x: cx + 120, y: cy + 105 },
+        handL: { x: cx - 160, y: cy + 170 },
+        handR: { x: cx + 160, y: cy + 170 },
+        hipL: { x: cx - 40, y: cy + 90 },
+        hipR: { x: cx + 40, y: cy + 90 },
+        kneeL: { x: cx - 50, y: cy + 225 },
+        kneeR: { x: cx + 50, y: cy + 225 },
+        footL: { x: cx - 75, y: cy + 330 },
+        footR: { x: cx + 75, y: cy + 330 }
       };
 
-      const wiggle = () => (Math.random() - 0.5) * 30;
-      for (const key in joints) {
+      const wiggle = () => (Math.random() - 0.5) * 35;
+      Object.keys(joints).forEach((key) => {
         if (key !== 'head') {
           joints[key].x += wiggle();
           joints[key].y += wiggle();
         }
-      }
+      });
       drawScene();
     }
 
     function clearPose() {
       joints = {
-        head: { x: 500, y: 110, r: 34 },
+        head: { x: 500, y: 120, r: 34 },
         neck: { x: 500, y: 170 },
         shoulderL: { x: 500, y: 170 },
         shoulderR: { x: 500, y: 170 },
@@ -225,10 +220,6 @@
       drawScene();
     }
 
-    function getJointNames() {
-      return Object.keys(joints);
-    }
-
     function drawLine(a, b, color = strokeColor, width = 8) {
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
@@ -244,6 +235,7 @@
       ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
       ctx.fillStyle = isSelected ? '#ffffff' : strokeColor;
       ctx.fill();
+
       if (isSelected) {
         ctx.beginPath();
         ctx.arc(point.x, point.y, radius + 7, 0, Math.PI * 2);
@@ -269,32 +261,35 @@
       const footL = joints.footL;
       const footR = joints.footR;
 
+      // Body
+      drawLine(neck, shoulderL, strokeColor, 8);
+      drawLine(neck, shoulderR, strokeColor, 8);
       drawLine(shoulderL, shoulderR, strokeColor, 8);
+      drawLine(neck, hipL, strokeColor, 8);
+      drawLine(neck, hipR, strokeColor, 8);
+      drawLine(hipL, hipR, strokeColor, 8);
+
+      // Arms
       drawLine(shoulderL, elbowL, strokeColor, 8);
       drawLine(elbowL, handL, strokeColor, 8);
       drawLine(shoulderR, elbowR, strokeColor, 8);
       drawLine(elbowR, handR, strokeColor, 8);
 
-      drawLine(neck, shoulderL, strokeColor, 8);
-      drawLine(neck, shoulderR, strokeColor, 8);
-      drawLine(neck, hipL, strokeColor, 8);
-      drawLine(neck, hipR, strokeColor, 8);
-
-      drawLine(hipL, hipR, strokeColor, 8);
+      // Legs
       drawLine(hipL, kneeL, strokeColor, 8);
       drawLine(kneeL, footL, strokeColor, 8);
       drawLine(hipR, kneeR, strokeColor, 8);
       drawLine(kneeR, footR, strokeColor, 8);
 
+      // Head + neck connection
       drawLine(neck, head, strokeColor, 5);
-
       ctx.beginPath();
       ctx.arc(head.x, head.y, head.r, 0, Math.PI * 2);
       ctx.strokeStyle = strokeColor;
       ctx.lineWidth = 8;
       ctx.stroke();
 
-      for (const key of getJointNames()) {
+      Object.keys(joints).forEach((key) => {
         const point = joints[key];
         const isSelected = selected === key;
         if (key === 'head') {
@@ -302,14 +297,14 @@
         } else {
           drawJoint(point, isSelected, 7);
         }
-      }
+      });
     }
 
     function drawScene() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawStickman();
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      ctx.font = '14px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = '14px Arial';
       ctx.fillText('Drag any joint to pose the stickman', 18, canvas.height - 18);
     }
 
@@ -317,7 +312,6 @@
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
-
       return {
         x: (evt.clientX - rect.left) * scaleX,
         y: (evt.clientY - rect.top) * scaleY
@@ -326,20 +320,18 @@
 
     function findClosestJoint(x, y) {
       let bestKey = null;
-      let bestDistance = Infinity;
+      let bestDist = Infinity;
 
-      for (const key of Object.keys(joints)) {
+      Object.keys(joints).forEach((key) => {
         const p = joints[key];
-        const dx = p.x - x;
-        const dy = p.y - y;
-        const distance = Math.hypot(dx, dy);
-
-        const grabRadius = key === 'head' ? 34 : 18;
-        if (distance < grabRadius && distance < bestDistance) {
-          bestDistance = distance;
+        const d = Math.hypot(p.x - x, p.y - y);
+        const radius = key === 'head' ? 40 : 20;
+        if (d < radius && d < bestDist) {
+          bestDist = d;
           bestKey = key;
         }
-      }
+      });
+
       return bestKey;
     }
 
@@ -356,11 +348,7 @@
       const pos = getPointerPos(evt);
       joints[selected].x = pos.x;
       joints[selected].y = pos.y;
-
-      if (selected === 'head') {
-        joints.head.r = 34;
-      }
-
+      if (selected === 'head') joints.head.r = 34;
       drawScene();
     });
 
@@ -383,8 +371,8 @@
 
     document.getElementById('downloadPng').addEventListener('click', () => {
       const link = document.createElement('a');
-      link.download = 'stickman.png';
       link.href = canvas.toDataURL('image/png');
+      link.download = 'stickman.png';
       link.click();
     });
 
