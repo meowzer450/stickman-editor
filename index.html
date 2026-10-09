@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stickman Editor</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --panel-2: #1f2631;
+      --text: #e6edf3;
+      --muted: #9aa4b2;
+      --accent: #6ee7ff;
+      --accent-2: #a78bfa;
+      --danger: #ff6b6b;
+      --grid: rgba(255,255,255,0.07);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(circle at top, #171c26, var(--bg) 55%);
+      color: var(--text);
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    .app {
+      width: min(100%, 1020px);
+      background: rgba(17, 22, 30, 0.9);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+      backdrop-filter: blur(8px);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 14px 16px;
+    }
+
+    .title {
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-size: 12px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button, input[type="color"] {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    button:hover, input[type="color"]:hover {
+      border-color: rgba(110,231,255,0.55);
+      box-shadow: 0 0 0 3px rgba(110,231,255,0.08);
+    }
+
+    button:active { transform: translateY(1px); }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #09131d;
+      border-color: transparent;
+      font-weight: 700;
+    }
+
+    .danger {
+      background: rgba(255,107,107,0.12);
+      border-color: rgba(255,107,107,0.35);
+      color: #ffc2c2;
+    }
+
+    input[type="color"] {
+      width: 44px;
+      height: 38px;
+      padding: 4px;
+      min-width: 44px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+        linear-gradient(180deg, #0f1721, #101a26 60%, #0b1320);
+      background-size: 24px 24px, 24px 24px, 100% 100%;
+      background-position: center center;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="toolbar">
+      <div class="title">Stickman Editor</div>
+      <div class="controls">
+        <button id="resetPose">Reset Pose</button>
+        <button id="randomPose">Random Pose</button>
+        <button id="downloadPng" class="primary">Download PNG</button>
+        <button id="clearPose" class="danger">Clear</button>
+        <label title="Stick color" aria-label="Stick color">
+          <input id="colorPicker" type="color" value="#6ee7ff" />
+        </label>
+      </div>
+    </div>
+    <canvas id="canvas" width="1000" height="620"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const colorPicker = document.getElementById('colorPicker');
+
+    const DEFAULT = {
+      head: { x: 500, y: 110, r: 34 },
+      neck: { x: 500, y: 170 },
+      shoulderL: { x: 440, y: 210 },
+      shoulderR: { x: 560, y: 210 },
+      elbowL: { x: 392, y: 295 },
+      elbowR: { x: 610, y: 295 },
+      handL: { x: 350, y: 365 },
+      handR: { x: 665, y: 365 },
+      hipL: { x: 470, y: 270 },
+      hipR: { x: 530, y: 270 },
+      kneeL: { x: 455, y: 400 },
+      kneeR: { x: 545, y: 400 },
+      footL: { x: 430, y: 520 },
+      footR: { x: 570, y: 520 }
+    };
+
+    let joints = structuredClone(DEFAULT);
+    let selected = null;
+    let strokeColor = colorPicker.value;
+
+    function cloneJoints(source) {
+      const copy = {};
+      for (const key in source) {
+        copy[key] = { ...source[key] };
+      }
+      return copy;
+    }
+
+    function resetPose() {
+      joints = cloneJoints(DEFAULT);
+      drawScene();
+    }
+
+    function randomPose() {
+      const cx = 500;
+      const cy = 200;
+      joints = {
+        head: { x: cx, y: 105, r: 34 },
+        neck: { x: cx, y: 170 },
+        shoulderL: { x: cx - 62, y: cy + 20 },
+        shoulderR: { x: cx + 62, y: cy + 20 },
+        elbowL: { x: cx - 105, y: cy + 110 },
+        elbowR: { x: cx + 105, y: cy + 110 },
+        handL: { x: cx - 145, y: cy + 180 },
+        handR: { x: cx + 145, y: cy + 180 },
+        hipL: { x: cx - 38, y: cy + 85 },
+        hipR: { x: cx + 38, y: cy + 85 },
+        kneeL: { x: cx - 55, y: cy + 220 },
+        kneeR: { x: cx + 55, y: cy + 220 },
+        footL: { x: cx - 70, y: cy + 340 },
+        footR: { x: cx + 70, y: cy + 340 }
+      };
+
+      const wiggle = () => (Math.random() - 0.5) * 30;
+      for (const key in joints) {
+        if (key !== 'head') {
+          joints[key].x += wiggle();
+          joints[key].y += wiggle();
+        }
+      }
+      drawScene();
+    }
+
+    function clearPose() {
+      joints = {
+        head: { x: 500, y: 110, r: 34 },
+        neck: { x: 500, y: 170 },
+        shoulderL: { x: 500, y: 170 },
+        shoulderR: { x: 500, y: 170 },
+        elbowL: { x: 500, y: 170 },
+        elbowR: { x: 500, y: 170 },
+        handL: { x: 500, y: 170 },
+        handR: { x: 500, y: 170 },
+        hipL: { x: 500, y: 170 },
+        hipR: { x: 500, y: 170 },
+        kneeL: { x: 500, y: 170 },
+        kneeR: { x: 500, y: 170 },
+        footL: { x: 500, y: 170 },
+        footR: { x: 500, y: 170 }
+      };
+      drawScene();
+    }
+
+    function getJointNames() {
+      return Object.keys(joints);
+    }
+
+    function drawLine(a, b, color = strokeColor, width = 8) {
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    function drawJoint(point, isSelected = false, radius = 8) {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = isSelected ? '#ffffff' : strokeColor;
+      ctx.fill();
+      if (isSelected) {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, radius + 7, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    function drawStickman() {
+      const head = joints.head;
+      const neck = joints.neck;
+      const shoulderL = joints.shoulderL;
+      const shoulderR = joints.shoulderR;
+      const elbowL = joints.elbowL;
+      const elbowR = joints.elbowR;
+      const handL = joints.handL;
+      const handR = joints.handR;
+      const hipL = joints.hipL;
+      const hipR = joints.hipR;
+      const kneeL = joints.kneeL;
+      const kneeR = joints.kneeR;
+      const footL = joints.footL;
+      const footR = joints.footR;
+
+      drawLine(shoulderL, shoulderR, strokeColor, 8);
+      drawLine(shoulderL, elbowL, strokeColor, 8);
+      drawLine(elbowL, handL, strokeColor, 8);
+      drawLine(shoulderR, elbowR, strokeColor, 8);
+      drawLine(elbowR, handR, strokeColor, 8);
+
+      drawLine(neck, shoulderL, strokeColor, 8);
+      drawLine(neck, shoulderR, strokeColor, 8);
+      drawLine(neck, hipL, strokeColor, 8);
+      drawLine(neck, hipR, strokeColor, 8);
+
+      drawLine(hipL, hipR, strokeColor, 8);
+      drawLine(hipL, kneeL, strokeColor, 8);
+      drawLine(kneeL, footL, strokeColor, 8);
+      drawLine(hipR, kneeR, strokeColor, 8);
+      drawLine(kneeR, footR, strokeColor, 8);
+
+      drawLine(neck, head, strokeColor, 5);
+
+      ctx.beginPath();
+      ctx.arc(head.x, head.y, head.r, 0, Math.PI * 2);
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 8;
+      ctx.stroke();
+
+      for (const key of getJointNames()) {
+        const point = joints[key];
+        const isSelected = selected === key;
+        if (key === 'head') {
+          drawJoint({ x: point.x, y: point.y }, isSelected, 8);
+        } else {
+          drawJoint(point, isSelected, 7);
+        }
+      }
+    }
+
+    function drawScene() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawStickman();
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '14px system-ui, sans-serif';
+      ctx.fillText('Drag any joint to pose the stickman', 18, canvas.height - 18);
+    }
+
+    function getPointerPos(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+
+      return {
+        x: (evt.clientX - rect.left) * scaleX,
+        y: (evt.clientY - rect.top) * scaleY
+      };
+    }
+
+    function findClosestJoint(x, y) {
+      let bestKey = null;
+      let bestDistance = Infinity;
+
+      for (const key of Object.keys(joints)) {
+        const p = joints[key];
+        const dx = p.x - x;
+        const dy = p.y - y;
+        const distance = Math.hypot(dx, dy);
+
+        const grabRadius = key === 'head' ? 34 : 18;
+        if (distance < grabRadius && distance < bestDistance) {
+          bestDistance = distance;
+          bestKey = key;
+        }
+      }
+      return bestKey;
+    }
+
+    canvas.addEventListener('pointerdown', (evt) => {
+      const pos = getPointerPos(evt);
+      selected = findClosestJoint(pos.x, pos.y);
+      if (selected) {
+        canvas.setPointerCapture(evt.pointerId);
+      }
+    });
+
+    canvas.addEventListener('pointermove', (evt) => {
+      if (!selected) return;
+      const pos = getPointerPos(evt);
+      joints[selected].x = pos.x;
+      joints[selected].y = pos.y;
+
+      if (selected === 'head') {
+        joints.head.r = 34;
+      }
+
+      drawScene();
+    });
+
+    canvas.addEventListener('pointerup', () => {
+      selected = null;
+    });
+
+    canvas.addEventListener('pointerleave', () => {
+      selected = null;
+    });
+
+    colorPicker.addEventListener('input', (e) => {
+      strokeColor = e.target.value;
+      drawScene();
+    });
+
+    document.getElementById('resetPose').addEventListener('click', resetPose);
+    document.getElementById('randomPose').addEventListener('click', randomPose);
+    document.getElementById('clearPose').addEventListener('click', clearPose);
+
+    document.getElementById('downloadPng').addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'stickman.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+
+    resetPose();
+  </script>
+</body>
+</html>
